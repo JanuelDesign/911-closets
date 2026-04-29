@@ -27,17 +27,6 @@
     --font-serif: 'Fraunces', serif;
     --font-sans: 'Plus Jakarta Sans', sans-serif;
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-    
-    /* ==========================================
-       CONFIGURACIÓN DE PRECIOS - MODIFICABLE AQUÍ
-       ========================================== */
-    --base-price: 1200;
-    --size-small-multiplier: 1.0;
-    --size-medium-multiplier: 1.3;
-    --size-large-multiplier: 1.6;
-    --size-xlarge-multiplier: 2.0;
-    --finish-multiplier: 1.3;
-    --extras-multiplier: 1.3;
 }
 
 /* ==========================================
@@ -230,21 +219,29 @@ h1, h2, h3, h4, h5, h6 {
     flex: 1;
 }
 
+/* ⭐ NUEVO: Contenedor PDF con scroll */
 .modal-pdf-container {
     width: 100%;
-    height: 400px;
+    height: 500px;
     background: var(--beige);
     border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden;
     margin-bottom: 1.5rem;
-    border: 2px dashed rgba(0,0,0,0.1);
+    border: 2px solid rgba(0,0,0,0.1);
+}
+
+.modal-pdf-container iframe,
+.modal-pdf-container embed {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 12px;
 }
 
 .modal-pdf-placeholder {
     text-align: center;
     color: #666;
+    padding: 3rem;
 }
 
 .modal-pdf-placeholder i {
@@ -765,7 +762,7 @@ section {
    CONFIGURATOR SECTION
    ========================================== */
 .configurator { 
-    padding: 6rem 2rem; 
+    padding: 6rem 1rem; 
     background: linear-gradient(135deg, var(--black) 0%, #1a1a1a 100%); 
     color: var(--white);
     width: 100%; 
@@ -800,23 +797,83 @@ section {
     backdrop-filter: blur(20px); 
 }
 
-.preview-image-container { 
-    position: relative; 
-    width: 100%; 
-    aspect-ratio: 4/3; 
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); 
-    overflow: hidden; 
+.preview-image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    overflow: hidden;
 }
 
-.preview-image { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-    transition: opacity 0.3s; 
+.preview-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    transform: scale(1);
+    transition: 
+        opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.preview-image.loading { 
-    opacity: 0.5; 
+/* Estado de carga: imagen se desvanece y hace zoom suave */
+.preview-image.loading {
+    opacity: 0;
+    transform: scale(1.05);
+}
+
+/* Imagen anterior que se desvanece */
+.preview-image.fade-out {
+    opacity: 0;
+    transform: scale(1.02);
+    transition: 
+        opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Imagen nueva que aparece */
+.preview-image.fade-in {
+    opacity: 0;
+    transform: scale(0.98);
+    animation: gentleFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes gentleFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.98) translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Efecto de brillo sutil al cargar */
+.preview-image-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.03),
+        transparent
+    );
+    transition: left 0.8s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.preview-image-container.loading::after {
+    left: 150%;
+    transition: left 1s ease;
 }
 
 /* Price Badge - DEBAJO DE LOS NOMBRES */
@@ -1193,7 +1250,7 @@ section {
    LEAD FORM SECTION - CON SUCCESS MESSAGE
    ========================================== */
 .lead-form { 
-    padding: 6rem 1rem; 
+    padding: 6rem 0rem; 
     background: var(--white); 
     position: relative; 
 }
@@ -2088,7 +2145,7 @@ section {
     }
     
     .modal-pdf-container {
-        height: 300px;
+        height: 350px;
     }
 }
 
@@ -2122,6 +2179,16 @@ section {
         flex-direction: column;
         gap: 0.25rem;
     }
+    
+    .modal-pdf-container {
+        height: 300px;
+    }
+}
+
+
+.textos-small{
+    font-size: 0.8rem;
+    padding-top: 9px;
 }
 </style>
 
@@ -2135,7 +2202,7 @@ section {
     <span id="toastMessage">Message sent!</span>
 </div>
 
-<!-- Modal para Other Color -->
+<!-- ⭐ MODAL OTHER COLOR CON PDF EMBED -->
 <div class="modal-overlay" id="colorModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -2146,13 +2213,19 @@ section {
         </div>
         <div class="modal-body">
             <p style="margin-bottom: 1rem; color: #666;">Browse our extensive color catalog with over 200 options. Find the perfect shade for your closet!</p>
+            
+            <!-- ⭐ PDF EMBED CON SCROLL -->
             <div class="modal-pdf-container">
-                <div class="modal-pdf-placeholder">
-                    <i class="fas fa-file-pdf"></i>
-                    <p>Color Catalog PDF</p>
-                    <small>200+ colors available</small>
-                </div>
+                <iframe src="img/pdf/catalog_other_colors.pdf" 
+                        title="Color Catalog PDF" 
+                        type="application/pdf">
+                    <p style="padding: 2rem; text-align: center; color: #666;">
+                        Your browser does not support PDFs. 
+                        <a href="img/pdf/catalog_other_colors.pdf" target="_blank" style="color: var(--red);">Download the PDF</a>
+                    </p>
+                </iframe>
             </div>
+            
             <p style="font-size: 0.9rem; color: #888; margin-top: 1rem;">
                 <i class="fas fa-info-circle"></i> 
                 After selecting your color, please note the code and enter it in the "Additional notes" field in the quote form.
@@ -2182,7 +2255,6 @@ section {
             <p class="hero-subtitle">Custom storage solutions that transform your space and simplify your life. Premium design, professional installation.</p>
             <div class="cta-buttons">
                 <a href="#configurator" class="hero-cta">Design Your Closet <i class="fas fa-arrow-right"></i></a>
-                <a href="https://wa.me/17863545003" class="cta-btn-secondary"><i class="fa-brands fa-whatsapp"></i> Send via WhatsApp </a>
             </div>
         </div>
     </div>
@@ -2228,32 +2300,32 @@ section {
         <div class="benefit-card">
             <div class="benefit-icon">✦</div>
             <h3>Personalized Design</h3>
-            <p>Each space is unique, each closet too. We design specifically for your needs and lifestyle.</p>
+            <p class="textos-small">Each space is unique, each closet too. We design specifically for your needs and lifestyle.</p>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">◈</div>
+            <div class="benefit-icon">✦</div>
             <h3>Premium Materials</h3>
-            <p>We use only top-quality materials, durable hardware, and impeccable finishes.</p>
+            <p class="textos-small">We use only top-quality materials, durable hardware, and impeccable finishes.</p>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">◉</div>
+            <div class="benefit-icon">✦</div>
             <h3>Expert Installation</h3>
-            <p>Our certified team guarantees a perfect finish and respect for your home.</p>
+            <p class="textos-small"> Our certified team guarantees a perfect finish and respect for your home.</p>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">▶</div>
+            <div class="benefit-icon" >✦</div>
             <h3>Rescue Express</h3>
-            <p>We install in record time without sacrificing quality. Most projects in under 7 days.</p>
+            <p class="textos-small">We install in record time without sacrificing quality. Most projects in under 7 days.</p>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">●</div>
+            <div class="benefit-icon">✦</div>
             <h3>South Florida Local</h3>
-            <p>We are close to you, serving Miami, Fort Lauderdale, and all of South Florida.</p>
+            <p class="textos-small">We are close to you, serving Miami, Fort Lauderdale, and all of South Florida.</p>
         </div>
         <div class="benefit-card">
-            <div class="benefit-icon">★</div>
+            <div class="benefit-icon">✦</div>
             <h3>Satisfaction Guaranteed</h3>
-            <p>Over 250 families in Florida trust us. Your satisfaction is our priority.</p>
+            <p class="textos-small">Over 250 families in Florida trust us. Your satisfaction is our priority.</p>
         </div>
     </div>
 </section>
@@ -2265,83 +2337,85 @@ section {
         <p>From walk-in closets to solutions for every corner of your home</p>
     </div>
     <div class="products-grid">
+        
         <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
             <div class="product-img-container">
-                <img src="img/products/walk-in.png" class="product-img">
+                <img src="img/products/reach-in.webp" class="product-img">
             </div>
             <div class="product-content">
-                <h4>Walk-in Closet</h4>
-                <p>The luxury of a personalized dressing room</p>
+                <h3>Reach-in Closet</h3>
+                <p class="textos-small">Double hanging rods and smart shelves maximize every inch of space.</p>
             </div>
             <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
         </div>
         <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
             <div class="product-img-container">
-                <img src="img/products/reach-in.png" class="product-img">
+                <img src="img/products/walk-in.webp" class="product-img">
             </div>
             <div class="product-content">
-                <h4>Reach-in Closet</h4>
-                <p>Maximum use of space</p>
+                <h3>Walk-in Closet</h3>
+                <p class="textos-small">Every detail designed around you. Your wardrobe, your space, your luxury.</p>
+            </div>
+            <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+        
+        <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
+            <div class="product-img-container">
+                <img src="img/products/wardrobe.webp" class="product-img">
+            </div>
+            <div class="product-content">
+                <h3>Wardrobe</h3>
+                <p class="textos-small">Bring the closet to you. Functional, beautiful, and completely flexible.</p>
             </div>
             <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
         </div>
         <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
             <div class="product-img-container">
-                <img src="img/products/wardrobe.png" class="product-img">
+                <img src="img/products/garage.webp" class="product-img">
             </div>
             <div class="product-content">
-                <h4>Wardrobe</h4>
-                <p>Elegant and functional freestanding units</p>
+                <h3>Garage Solutions</h3>
+                <p class="textos-small">Heavy-duty cabinets and slat walls for a clutter-free garage.</p>
             </div>
             <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
         </div>
         <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
             <div class="product-img-container">
-                <img src="img/products/garage.png" class="product-img">
+                <img src="img/products/pantry.webp" class="product-img">
             </div>
             <div class="product-content">
-                <h4>Garage Solutions</h4>
-                <p>Organize your garage professionally</p>
+                <h3>Pantry</h3>
+                <p class="textos-small">Smart pantry design that saves you time and reduces food waste.</p>
             </div>
             <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
         </div>
         <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
             <div class="product-img-container">
-                <img src="img/products/pantry.png" class="product-img">
+                <img src="img/products/built-in.webp" class="product-img">
             </div>
             <div class="product-content">
-                <h4>Pantry</h4>
-                <p>Organized and accessible pantries</p>
+                <h3>Built-in</h3>
+                <p class="textos-small">Furniture that disappears into your walls. Beautiful and functional.</p>
             </div>
             <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
         </div>
         <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
             <div class="product-img-container">
-                <img src="img/products/built-in.png" class="product-img">
+                <img src="img/products/linen-closet.webp" class="product-img">
             </div>
             <div class="product-content">
-                <h4>Built-in</h4>
-                <p>Custom built-in furniture</p>
+                <h3>Linen Closet</h3>
+                <p class="textos-small">Adjustable shelves for bulky blankets and delicate sheets alike.</p>
             </div>
             <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
         </div>
         <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
             <div class="product-img-container">
-                <img src="img/products/linen-closet.png" class="product-img">
+                <img src="img/products/tv-unit.webp" class="product-img">
             </div>
             <div class="product-content">
-                <h4>Linen Closet</h4>
-                <p>Perfect organization for linens</p>
-            </div>
-            <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
-        </div>
-        <div class="product-card" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">
-            <div class="product-img-container">
-                <img src="img/products/tv-unit.png" class="product-img">
-            </div>
-            <div class="product-content">
-                <h4>TV Unit</h4>
-                <p>Custom entertainment centers</p>
+                <h3>TV Unit</h3>
+                <p class="textos-small">A media center designed around your screen size and storage needs.</p>
             </div>
             <div class="product-arrow"><i class="fas fa-arrow-right"></i></div>
         </div>
@@ -2362,9 +2436,9 @@ section {
                     <img id="previewImage" class="preview-image" src="" alt="Your custom closet">
                 </div>
                 <div class="preview-info">
-                    <h3 id="previewTitle">Walk-in Closet</h3>
+                    <h3 id="previewTitle">Reach-in Closet</h3>
                     <p id="previewSubtitle">Medium Size</p>
-                    <div class="price-badge" id="priceBadge">$1,560</div>
+                    <div class="price-badge" id="priceBadge">$3,600</div>
                 </div>
             </div>
 
@@ -2409,7 +2483,7 @@ section {
                 <div class="tab-content" id="tab-extras">
                     <h4 class="tab-title">Add Extras (Optional)</h4>
                     <p style="color: rgba(255,255,255,0.6); margin-bottom: 1.5rem; font-size: 0.9rem;">
-                        <i class="fas fa-info-circle"></i> Each extra service has its own percentage fee.
+                        <i class="fas fa-info-circle"></i> Select the extras you'd like to add to your project.
                     </p>
                     <div class="extras-list" id="extrasOptions"></div>
                 </div>
@@ -2487,7 +2561,7 @@ section {
                 </div>
                 <div class="form-group">
                     <label>Additional notes or color code</label>
-                    <textarea id="clientNotes" rows="3" placeholder="Tell us about your project... If you selected 'Other Color', please enter your color code here."></textarea>
+                    <textarea id="clientNotes" rows="3" placeholder="Tell us about your project... If you selected 'Other Color' or 'Other Extra', please enter your details here."></textarea>
                 </div>
                 <button type="submit" class="btn-submit" id="submitBtn">
                     Send My Quote <i class="fas fa-paper-plane"></i>
@@ -2634,57 +2708,57 @@ section {
         <div class="gallery-item">
             <img src="img/gallery/2p.webp">
             <div class="gallery-overlay">
-                <h4>Modern Walk-in</h4>
-                <p>Miami Beach</p>
+                <h4>Walk-In Closet</h4>
+                <p>Aventura</p>
             </div>
         </div>
         <div class="gallery-item">
             <img src="img/gallery/1p.webp">
             <div class="gallery-overlay">
-                <h4>Minimalist Reach-in</h4>
-                <p>Fort Lauderdale</p>
+                <h4>Walk-In Closet</h4>
+                <p>Miami Beach</p>
             </div>
         </div>
         <div class="gallery-item">
             <img src="img/gallery/3p.webp">
             <div class="gallery-overlay">
-                <h4>Luxury Wardrobe</h4>
-                <p>Coral Gables</p>
+                <h4>Luxury Walk-In Closet</h4>
+                <p>Palmetto Bay</p>
             </div>
         </div>
         <div class="gallery-item">
             <img src="img/gallery/8p.webp">
             <div class="gallery-overlay">
-                <h4>Garage Organization</h4>
-                <p>Pinecrest</p>
+                <h4>Walk-In Closet</h4>
+                <p>West Kendall</p>
             </div>
         </div>
         <div class="gallery-item">
             <img src="img/gallery/5p.webp">
             <div class="gallery-overlay">
-                <h4>Custom Pantry</h4>
-                <p>Aventura</p>
+                <h4>Custom Cubby Storage</h4>
+                <p>Wynwood</p>
             </div>
         </div>
         <div class="gallery-item">
             <img src="img/gallery/4p.webp">
             <div class="gallery-overlay">
-                <h4>Built-in Library</h4>
-                <p>Key Biscayne</p>
+                <h4>Linen Closet</h4>
+                <p>Venetian Islands</p>
             </div>
         </div>
         <div class="gallery-item">
             <img src="img/gallery/7p.webp">
             <div class="gallery-overlay">
-                <h4>Office Storage</h4>
-                <p>Brickell</p>
+                <h4>Luxury Walk-In Closet</h4>
+                <p>Gables Estates</p>
             </div>
         </div>
         <div class="gallery-item">
             <img src="img/gallery/6p.webp">
             <div class="gallery-overlay">
-                <h4>Entertainment Center</h4>
-                <p>Sunny Isles</p>
+                <h4>Wardrobe</h4>
+                <p>Miami Beach</p>
             </div>
         </div>
     </div>
@@ -2714,7 +2788,6 @@ section {
         </div>
         <div class="footer-section">
             <h4>Contact</h4>
-            <p><i class="fa-brands fa-whatsapp"></i> <a href="https://wa.me/17863545003">Send via WhatsApp</a></p>
             <p><i class="fas fa-envelope"></i> <a href="mailto:augusto@911closets.com">augusto@911closets.com</a></p>
             <p><i class="fas fa-map-marker-alt"></i><a href="https://share.google/DG6nEU43tc2EgauiR" target="_blank">14260 SW 143 Ct, Suite 604, Miami, FL 33186</a> </p>
         </div>
@@ -2746,35 +2819,75 @@ section {
         PUBLIC_KEY: 'V7FCfKu3_ltY9-HTN',
         SERVICE_ID: 'service_q8ydvwd',
         TEMPLATE_ADMIN_ID: 'template_v2r1g5k',      // Template para ti (admin)
-        TEMPLATE_CLIENT_ID: 'template_qw4yz4o'      // ⭐ REEMPLAZA con tu template de cliente
+        TEMPLATE_CLIENT_ID: 'template_qw4yz4o'      // Template para cliente
     };
     
     emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
     
     // ==========================================
-    // CONFIGURACIÓN DE PRECIOS - MODIFICABLE AQUÍ
+    // ⭐ CONFIGURACIÓN DE PRECIOS - PRECIOS FIJOS POR PRODUCTO/TAMAÑO
     // ==========================================
     const PRICING_CONFIG = {
-        basePrice: 1200,                    // Precio base fijo $1,200
-        
-        // MULTIPLICADORES POR TAMAÑO (1.0 = 0%, 1.3 = 30%, etc.)
-        sizeMultipliers: {
-            small: 1.0,      // 0% aumento  → $1,200
-            medium: 1.3,     // 30% aumento → $1,560
-            large: 1.6,      // 60% aumento → $1,920
-            xlarge: 2.0      // 100% aumento → $2,400
+        // ⭐ PRECIOS FIJOS POR PRODUCTO Y TAMAÑO
+        productPrices: {
+            reachin: {
+                small: 1200,
+                medium: 3600,
+                large: 6800
+            },
+            walkin: {
+                small: 3600,
+                medium: 5400,
+                large: 9200
+            },
+            wardrobe: {
+                small: 2800,
+                medium: 4900,
+                large: 6700
+            },
+            garage: {
+                small: 2800,
+                medium: 4900,
+                large: 6700
+            },
+            pantry: {
+                small: 3600,
+                medium: 5400,
+                large: 9200
+            },
+            builtin: {
+                small: 2800,
+                medium: 4900,
+                large: 6700
+            },
+            linen: {
+                small: 1200,
+                medium: 3600,
+                large: 6800
+            },
+            tvunit: {
+                small: 3000,
+                medium: 6000,
+                large: 9000
+            }
         },
         
-        finishMultiplier: 1.3,    // 30% aumento por acabado (todos los colores)
+        // ⭐ MULTIPLICADOR DE ACABADO: 1.0 para White, 1.3 para otros
+        finishMultipliers: {
+            white: 1.0,       // White: sin aumento
+            cream: 1.3,       // Cream: +30%
+            oak: 1.3,         // Natural Oak: +30%
+            walnut: 1.3,      // Walnut: +30%
+            gray: 1.3,        // Matte Gray: +30%
+            other: 1.3        // Other Color: +30%
+        },
         
-        // ⭐ NUEVO: CADA EXTRA CON SU PROPIO MULTIPLICADOR
-        extrasMultipliers: {
-            led: 1.2,        // LED Lighting: +20% → $400 × 1.2 = $480
-            shoe: 1.25,      // Shoe Rack: +25% → $350 × 1.25 = $438
-            island: 1.5,     // Center Island: +50% → $800 × 1.5 = $1,200
-            drawers: 1.15,   // Jewelry Drawers: +15% → $300 × 1.15 = $345
-            glass: 1.3,      // Glass Shelves: +30% → $450 × 1.3 = $585
-            mirror: 1.1      // Full Mirror: +10% → $250 × 1.1 = $275
+        // ⭐ EXTRAS: Algunos porcentaje, otros precio fijo
+        extrasConfig: {
+            led: { type: 'percentage', value: 0.15 },      // LED: +15% del precio base
+            glass: { type: 'fixed', value: 250 },          // Glass Shelves: +$250
+            drawers: { type: 'fixed', value: 300 },        // Jewelry Drawers: +$300
+            island: { type: 'fixed', value: 1800 }         // Center Island: +$1,800
         }
     };
     
@@ -2782,42 +2895,46 @@ section {
     // CONFIGURATOR DATA
     // ==========================================
     const CONFIG_DATA = {
+        // ⭐ REACH-IN PRIMERO EN LA LISTA
         products: [
-            { id: 'walkin', name: 'Walk-in Closet', icon: '🚪', desc: 'Luxury dressing room' },
             { id: 'reachin', name: 'Reach-in Closet', icon: '🚪', desc: 'Maximum space use' },
+            { id: 'walkin', name: 'Walk-in Closet', icon: '🚪', desc: 'Luxury dressing room' },
             { id: 'wardrobe', name: 'Wardrobe', icon: '👔', desc: 'Freestanding unit' },
             { id: 'garage', name: 'Garage Storage', icon: '🚗', desc: 'Professional organization' },
-            { id: 'pantry', name: 'Pantry', icon: '🥫', desc: 'Kitchen storage' },
+            // ⭐ ICONO PANTRY: Usamos emoji de caja/utensilios compatible con todos los navegadores
+            { id: 'pantry', name: 'Pantry Room', icon: '🍳', desc: 'Kitchen storage' },
             { id: 'builtin', name: 'Built-in', icon: '📚', desc: 'Custom furniture' },
             { id: 'linen', name: 'Linen Closet', icon: '🛏️', desc: 'Linen organization' },
             { id: 'tvunit', name: 'TV Unit', icon: '📺', desc: 'Entertainment center' }
         ],
+        // ⭐ SIN X-LARGE
         sizes: [
-            { id: 'small', name: 'Small', desc: '< 6 ft', multiplier: PRICING_CONFIG.sizeMultipliers.small },
-            { id: 'medium', name: 'Medium', desc: '6-12 ft', multiplier: PRICING_CONFIG.sizeMultipliers.medium },
-            { id: 'large', name: 'Large', desc: '12-18 ft', multiplier: PRICING_CONFIG.sizeMultipliers.large },
-            { id: 'xlarge', name: 'X-Large', desc: '18+ ft', multiplier: PRICING_CONFIG.sizeMultipliers.xlarge }
+            { id: 'small', name: 'Small', desc: '< 6 ft' },
+            { id: 'medium', name: 'Medium', desc: '6-12 ft' },
+            { id: 'large', name: 'Large', desc: '12-18 ft' }
         ],
         finishes: [
-            { id: 'white', name: 'White Gloss', color: '#f5f5f5' },
+            // ⭐ WHITE SIN "GLOSS"
+            { id: 'white', name: 'White', color: '#f5f5f5' },
             { id: 'cream', name: 'Cream', color: '#f5f5dc' },
             { id: 'oak', name: 'Natural Oak', color: '#d4a574' },
             { id: 'walnut', name: 'Walnut', color: '#5d4e37' },
             { id: 'gray', name: 'Matte Gray', color: '#6b7280' },
             { id: 'other', name: 'Other Color', color: 'other', isOther: true }
         ],
+        // ⭐ EXTRAS ACTUALIZADOS: Sin Shoe Rack ni Full Mirror, agregado "Other"
         extras: [
-            { id: 'led', name: 'LED Lighting', icon: '💡', basePrice: 400, desc: 'Integrated LED system' },
-            { id: 'shoe', name: 'Shoe Rack', icon: '👠', basePrice: 350, desc: 'Dedicated shoe storage' },
-            { id: 'island', name: 'Center Island', icon: '🏝️', basePrice: 800, desc: 'Storage island with drawers' },
-            { id: 'drawers', name: 'Jewelry Drawers', icon: '💍', basePrice: 300, desc: 'Velvet-lined organizers' },
-            { id: 'glass', name: 'Glass Shelves', icon: '🔮', basePrice: 450, desc: 'Tempered glass shelving' },
-            { id: 'mirror', name: 'Full Mirror', icon: '🪞', basePrice: 250, desc: 'Built-in full-length mirror' }
+            { id: 'led', name: 'LED Lighting', icon: '💡', desc: 'Integrated LED system ' },
+            { id: 'glass', name: 'Glass Shelves', icon: '🔮', desc: 'Tempered glass shelving ' },
+            { id: 'drawers', name: 'Jewelry Drawers', icon: '💍', desc: 'Velvet-lined organizers ' },
+            { id: 'island', name: 'Center Island', icon: '🏝️', desc: 'Storage island with drawers ' },
+            { id: 'other', name: 'Other', icon: '✨', desc: 'Describe your custom extra in the notes below' }
         ]
     };
     
+    // Estado inicial: Reach-in Medium
     let state = {
-        product: 'walkin',
+        product: 'reachin',
         size: 'medium',
         finish: 'white',
         extras: []
@@ -2920,7 +3037,7 @@ section {
     });
     
     // ==========================================
-    // RENDER FUNCTIONS
+    // RENDER FUNCTIONS <div class="option-price">From $${price.toLocaleString()}</div>
     // ==========================================
     function renderAll() {
         renderProducts();
@@ -2928,32 +3045,27 @@ section {
         renderFinishes();
         renderExtras();
     }
-    
     function renderProducts() {
-        const container = document.getElementById('productOptions');
-        container.innerHTML = CONFIG_DATA.products.map(p => `
-            <div class="option-card ${state.product === p.id ? 'selected' : ''}" onclick="selectProduct('${p.id}')">
-                <span class="option-icon">${p.icon}</span>
-                <div class="option-name">${p.name}</div>
-                <div class="option-desc">${p.desc}</div>
-                <div class="option-price">$${PRICING_CONFIG.basePrice.toLocaleString()}</div>
-            </div>
-        `).join('');
-    }
+    const container = document.getElementById('productOptions');
+    container.innerHTML = CONFIG_DATA.products.map(p => `
+        <div class="option-card ${state.product === p.id ? 'selected' : ''}" onclick="selectProduct('${p.id}')">
+            <span class="option-icon">${p.isIcon ? '<i class="fas ' + p.icon + '"></i>' : p.icon}</span>
+            <div class="option-name">${p.name}</div>
+            <div class="option-desc">${p.desc}</div>
+        </div>
+    `).join('');
+}
+    
     
     function renderSizes() {
         const container = document.getElementById('sizeOptions');
-        container.innerHTML = CONFIG_DATA.sizes.map(s => {
-            const increase = Math.round((s.multiplier - 1) * 100);
-            return `
-                <div class="option-card ${state.size === s.id ? 'selected' : ''}" onclick="selectSize('${s.id}')">
-                    <span class="option-icon">📏</span>
-                    <div class="option-name">${s.name}</div>
-                    <div class="option-desc">${s.desc}</div>
-                    <div class="option-price">${increase > 0 ? '+' : ''}${increase}%</div>
-                </div>
-            `;
-        }).join('');
+        container.innerHTML = CONFIG_DATA.sizes.map(s => `
+            <div class="option-card ${state.size === s.id ? 'selected' : ''}" onclick="selectSize('${s.id}')">
+                <span class="option-icon">📏</span>
+                <div class="option-name">${s.name}</div>
+                <div class="option-desc">${s.desc}</div>
+            </div>
+        `).join('');
     }
     
     function renderFinishes() {
@@ -2969,67 +3081,57 @@ section {
     }
     
     // ==========================================
-    // ⭐ RENDER EXTRAS CON PORCENTAJES INDIVIDUALES
+    // ⭐ RENDER EXTRAS ACTUALIZADOS
     // ==========================================
     function renderExtras() {
-        const container = document.getElementById('extrasOptions');
-        container.innerHTML = CONFIG_DATA.extras.map(e => {
-            // Obtener multiplicador específico de este extra
-            const multiplier = PRICING_CONFIG.extrasMultipliers[e.id] || 1.3;
-            const finalPrice = Math.round(e.basePrice * multiplier);
-            const increase = Math.round((multiplier - 1) * 100);
-            
-            return `
-                <div class="extra-item ${state.extras.includes(e.id) ? 'selected' : ''}" onclick="toggleExtra('${e.id}')">
-                    <div class="extra-checkbox">${state.extras.includes(e.id) ? '✓' : ''}</div>
-                    <span class="extra-icon">${e.icon}</span>
-                    <div class="extra-info">
-                        <div class="extra-name">${e.name}</div>
-                        <div class="extra-desc">${e.desc}</div>
-                    </div>
-                    <div class="extra-price">
-                        +$${finalPrice.toLocaleString()}
-                        <span style="font-size: 0.75rem; color: #888; display: block; font-weight: 400;">
-                            (+${increase}%)
-                        </span>
-                    </div>
-                </div>
-            `;
-        }).join('');
+    const container = document.getElementById('extrasOptions');
+    container.innerHTML = CONFIG_DATA.extras.map(e => `
+        <div class="extra-item ${state.extras.includes(e.id) ? 'selected' : ''}" onclick="toggleExtra('${e.id}')">
+            <div class="extra-checkbox">${state.extras.includes(e.id) ? '✓' : ''}</div>
+            <span class="extra-icon">${e.icon}</span>
+            <div class="extra-info">
+                <div class="extra-name">${e.name}</div>
+                <div class="extra-desc">${e.desc}</div>
+            </div>
+            <!-- PRECIO ELIMINADO - no se muestra nada aquí -->
+        </div>
+    `).join('');
     }
     
     // ==========================================
     // SELECTION HANDLERS
     // ==========================================
-    function selectProduct(id) {
+        function selectProduct(id) {
         state.product = id;
         renderProducts();
-        updatePreview();
+        renderSizes();
+        updatePreview(true);   // ⭐ TRUE = animar (cambia imagen)
         updateFormSummary();
     }
-    
+
     function selectSize(id) {
         state.size = id;
+        renderProducts();
         renderSizes();
-        updatePreview();
+        updatePreview(true);   // ⭐ TRUE = animar (cambia imagen)
         updateFormSummary();
     }
-    
+
     function selectFinish(id) {
         state.finish = id;
         renderFinishes();
-        updatePreview();
+        updatePreview(false);  // ⭐ FALSE = no animar (no cambia imagen)
         updateFormSummary();
     }
-    
+
     function selectOtherColor() {
         state.finish = 'other';
         renderFinishes();
         openColorModal();
-        updatePreview();
+        updatePreview(false);  // ⭐ FALSE = no animar (no cambia imagen)
         updateFormSummary();
     }
-    
+
     function toggleExtra(id) {
         if (state.extras.includes(id)) {
             state.extras = state.extras.filter(e => e !== id);
@@ -3037,7 +3139,7 @@ section {
             state.extras.push(id);
         }
         renderExtras();
-        updatePreview();
+        updatePreview(false);  // ⭐ FALSE = no animar (no cambia imagen)
         updateFormSummary();
     }
     
@@ -3068,63 +3170,147 @@ section {
     }
     
     // ==========================================
-    // PREVIEW & PRICING - CON EXTRAS INDIVIDUALES
+    // ⭐ PREVIEW & PRICING - PRECIOS FIJOS POR PRODUCTO/TAMAÑO
     // ==========================================
-    function updatePreview() {
-        const product = CONFIG_DATA.products.find(p => p.id === state.product);
-        const size = CONFIG_DATA.sizes.find(s => s.id === state.size);
-        const finish = CONFIG_DATA.finishes.find(f => f.id === state.finish);
-        
-        // Calculate price: base * size * finish
-        let price = PRICING_CONFIG.basePrice * size.multiplier * PRICING_CONFIG.finishMultiplier;
-        
-        // ⭐ Add extras with INDIVIDUAL multipliers
-        state.extras.forEach(extraId => {
-            const extra = CONFIG_DATA.extras.find(e => e.id === extraId);
-            const multiplier = PRICING_CONFIG.extrasMultipliers[extraId] || 1.3;
-            price += extra.basePrice * multiplier;
-        });
-        
-        // Update image - only product and size affect image, NOT finish
-        const imgPath = `img/configurator/${state.product}/${state.size}.jpg`;
-        const previewImg = document.getElementById('previewImage');
-        previewImg.classList.add('loading');
-        
-        const tempImg = new Image();
-        tempImg.onload = () => {
-            previewImg.src = imgPath;
-            previewImg.classList.remove('loading');
-        };
-        tempImg.onerror = () => {
-            previewImg.src = `https://placehold.co/800x600/2a2a2a/white?text=${encodeURIComponent(product.name)}`;
-            previewImg.classList.remove('loading');
-        };
-        tempImg.src = imgPath;
-        
-        // Update text
-        document.getElementById('previewTitle').textContent = product.name;
-        document.getElementById('previewSubtitle').textContent = `${size.name} Size${finish.id === 'other' ? ' • Custom Color' : ''}`;
-        document.getElementById('priceBadge').textContent = '$' + Math.round(price).toLocaleString();
-    }
+    // ==========================================
+// ⭐ PREVIEW & PRICING - CON CONTROL DE TRANSICIÓN
+// ==========================================
+function updatePreview(animate = true) {
+    const product = CONFIG_DATA.products.find(p => p.id === state.product);
+    const size = CONFIG_DATA.sizes.find(s => s.id === state.size);
+    const finish = CONFIG_DATA.finishes.find(f => f.id === state.finish);
+    
+    // Calcular precio
+    let price = PRICING_CONFIG.productPrices[state.product][state.size];
+    const basePrice = price;
+    const finishMultiplier = PRICING_CONFIG.finishMultipliers[state.finish] || 1.0;
+    price = price * finishMultiplier;
+    
+    state.extras.forEach(extraId => {
+        const extraConfig = PRICING_CONFIG.extrasConfig[extraId];
+        if (extraConfig) {
+            if (extraConfig.type === 'percentage') {
+                price += basePrice * extraConfig.value;
+            } else if (extraConfig.type === 'fixed') {
+                price += extraConfig.value;
+            }
+        }
+    });
     
     // ==========================================
-    // UPDATE FORM SUMMARY - CON EXTRAS INDIVIDUALES
+    // ⭐ SOLO ANIMAR SI ES PRODUCTO O TAMAÑO
+    // ==========================================
+    if (animate) {
+        // Transición suave con crossfade
+        const imgPath = `img/configurator/${state.product}/${state.size}.jpg`;
+        const previewImg = document.getElementById('previewImage');
+        const container = document.querySelector('.preview-image-container');
+        
+        // Aplicar fade out
+        previewImg.classList.add('fade-out');
+        container.classList.add('loading');
+        
+        const tempImg = new Image();
+        
+        tempImg.onload = () => {
+            setTimeout(() => {
+                previewImg.src = imgPath;
+                previewImg.classList.remove('fade-out');
+                previewImg.classList.add('fade-in');
+                container.classList.remove('loading');
+                
+                setTimeout(() => {
+                    previewImg.classList.remove('fade-in');
+                }, 700);
+            }, 300);
+        };
+        
+        tempImg.onerror = () => {
+            previewImg.src = `https://placehold.co/800x600/2a2a2a/white?text=${encodeURIComponent(product.name)}`;
+            previewImg.classList.remove('fade-out');
+            previewImg.classList.add('fade-in');
+            container.classList.remove('loading');
+            
+            setTimeout(() => {
+                previewImg.classList.remove('fade-in');
+            }, 700);
+        };
+        
+        tempImg.src = imgPath;
+        
+    } else {
+        // Sin animación: cambio instantáneo solo del precio
+        const previewImg = document.getElementById('previewImage');
+        // No tocamos la imagen, solo actualizamos el precio
+    }
+    
+    // Actualizar textos siempre
+    document.getElementById('previewTitle').textContent = product.name;
+    document.getElementById('previewSubtitle').textContent = `${size.name} Size${finish.id === 'other' ? ' • Custom Color' : ''}`;
+    
+    // Animar precio siempre (es solo un número, no afecta la imagen)
+    animatePrice(document.getElementById('priceBadge'), Math.round(price));
+}
+// ==========================================
+// ⭐ ANIMACIÓN SUAVE DEL PRECIO (CONTADOR)
+// ==========================================
+function animatePrice(element, targetPrice) {
+    const currentText = element.textContent.replace(/[^0-9]/g, '');
+    const startPrice = currentText ? parseInt(currentText) : 0;
+    const duration = 600;
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing suave (ease-out-cubic)
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+        
+        const currentPrice = Math.round(startPrice + (targetPrice - startPrice) * easeProgress);
+        element.textContent = '$' + currentPrice.toLocaleString();
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+    
+    // ==========================================
+    // ⭐ UPDATE FORM SUMMARY - PRECIOS FIJOS
     // ==========================================
     function updateFormSummary() {
         const product = CONFIG_DATA.products.find(p => p.id === state.product);
         const size = CONFIG_DATA.sizes.find(s => s.id === state.size);
         const finish = CONFIG_DATA.finishes.find(f => f.id === state.finish);
         
-        // Calculate price
-        let price = PRICING_CONFIG.basePrice * size.multiplier * PRICING_CONFIG.finishMultiplier;
+        // ⭐ Precio base
+        let price = PRICING_CONFIG.productPrices[state.product][state.size];
+        const basePrice = price;
+        
+        // ⭐ Multiplicador de acabado
+        const finishMultiplier = PRICING_CONFIG.finishMultipliers[state.finish] || 1.0;
+        price = price * finishMultiplier;
         
         let extrasText = 'None';
         if (state.extras.length > 0) {
             const extraNames = state.extras.map(id => {
                 const extra = CONFIG_DATA.extras.find(e => e.id === id);
-                const multiplier = PRICING_CONFIG.extrasMultipliers[id] || 1.3;
-                price += extra.basePrice * multiplier;
-                return `${extra.name} (+${Math.round((multiplier-1)*100)}%)`;
+                const extraConfig = PRICING_CONFIG.extrasConfig[id];
+                
+                if (extraConfig) {
+                    if (extraConfig.type === 'percentage') {
+                        const extraPrice = basePrice * extraConfig.value;
+                        price += extraPrice;
+                        return `${extra.name} (+${(extraConfig.value * 100).toFixed(0)}%)`;
+                    } else if (extraConfig.type === 'fixed') {
+                        price += extraConfig.value;
+                        return `${extra.name} (+$${extraConfig.value.toLocaleString()})`;
+                    }
+                }
+                return `${extra.name} (Custom)`;
             });
             extrasText = extraNames.join(', ');
         }
@@ -3194,7 +3380,7 @@ section {
     }
     
     // ==========================================
-    // ⭐ FORM SUBMISSION - DOBLE ENVÍO + IMAGEN CORREGIDA
+    // ⭐ FORM SUBMISSION - DOBLE ENVÍO
     // ==========================================
     document.getElementById('leadForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -3235,28 +3421,36 @@ section {
         const size = CONFIG_DATA.sizes.find(s => s.id === state.size);
         const finish = CONFIG_DATA.finishes.find(f => f.id === state.finish);
         
-        // ⭐ CALCULAR PRECIO CON MULTIPLICADORES INDIVIDUALES
-        let price = PRICING_CONFIG.basePrice * size.multiplier * PRICING_CONFIG.finishMultiplier;
+        // ⭐ CALCULAR PRECIO CON NUEVA ESTRUCTURA
+        let price = PRICING_CONFIG.productPrices[state.product][state.size];
+        const basePrice = price;
+        
+        const finishMultiplier = PRICING_CONFIG.finishMultipliers[state.finish] || 1.0;
+        price = price * finishMultiplier;
         
         const extrasList = state.extras.map(id => {
             const extra = CONFIG_DATA.extras.find(e => e.id === id);
-            const multiplier = PRICING_CONFIG.extrasMultipliers[id] || 1.3;
-            const finalPrice = Math.round(extra.basePrice * multiplier);
-            price += finalPrice;
-            return `${extra.name} (+${Math.round((multiplier-1)*100)}%) - $${finalPrice}`;
+            const extraConfig = PRICING_CONFIG.extrasConfig[id];
+            
+            if (extraConfig) {
+                if (extraConfig.type === 'percentage') {
+                    const extraPrice = basePrice * extraConfig.value;
+                    price += extraPrice;
+                    return `${extra.name} (+${(extraConfig.value * 100).toFixed(0)}%) - $${Math.round(extraPrice)}`;
+                } else if (extraConfig.type === 'fixed') {
+                    price += extraConfig.value;
+                    return `${extra.name} (+$${extraConfig.value.toLocaleString()})`;
+                }
+            }
+            return `${extra.name} (Custom - see notes)`;
         });
         
-        // ⭐ CONSTRUIR URL DE IMAGEN - USAR DOMINIO ABSOLUTO PARA EMAIL
-        // Opción A: URL dinámica (funciona si el dominio es público)
+        // Construir URL de imagen
         const protocol = window.location.protocol;
         const host = window.location.host;
         const imagePath = `img/configurator/${state.product}/${state.size}.jpg`;
+        const fullImageUrl = `${protocol}//${host}/${imagePath}`;
         
-        // ⭐ IMPORTANTE: Para producción, usa tu dominio real
-        // const fullImageUrl = `https://www.911closets.com/${imagePath}`; // ← DESCOMENTA EN PRODUCCIÓN
-        const fullImageUrl = `${protocol}//${host}/${imagePath}`; // ← Para desarrollo/testing
-        
-        // DEBUG - Verifica en consola
         console.log('🖼️ URL de imagen:', fullImageUrl);
         console.log('📧 Email cliente:', emailInput.value);
         
@@ -3274,15 +3468,15 @@ section {
             finish_name: finish.name,
             extras_list: extrasList.length > 0 ? extrasList.join(', ') : 'None selected',
             price_estimate: '$' + Math.round(price).toLocaleString(),
-            config_image_url: fullImageUrl,  // ⭐ Esta es la variable crítica
+            config_image_url: fullImageUrl,
             reply_to: emailInput.value
         };
         
         try {
-            // 1. ENVIAR A ADMIN (template original)
+            // 1. ENVIAR A ADMIN
             const adminParams = {
                 ...commonParams,
-                to_email: 'janueldesign@gmmail.com'  // Tu email
+                to_email: 'janueldesign@gmmail.com'
             };
             
             console.log('📤 Enviando a admin...', adminParams);
@@ -3293,10 +3487,10 @@ section {
                 adminParams
             );
             
-            // 2. ENVIAR AUTO-REPLY A CLIENTE (nuevo template)
+            // 2. ENVIAR AUTO-REPLY A CLIENTE
             const clientParams = {
                 ...commonParams,
-                to_email: emailInput.value  // Email del cliente
+                to_email: emailInput.value
             };
             
             console.log('📤 Enviando a cliente...', clientParams);
@@ -3373,7 +3567,8 @@ section {
         document.getElementById('clientPhone').value = '';
         document.getElementById('clientZip').value = '';
         
-        state = { product: 'walkin', size: 'medium', finish: 'white', extras: [] };
+        // Resetear estado al inicial
+        state = { product: 'reachin', size: 'medium', finish: 'white', extras: [] };
         renderAll();
         updatePreview();
         updateFormSummary();
